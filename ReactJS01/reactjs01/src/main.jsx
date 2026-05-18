@@ -13,6 +13,7 @@ import ProductDetail from './pages/product-detail.jsx';
 import SearchPage from './pages/search.jsx';
 import ProductManagement from './pages/admin/ProductManagement.jsx';
 import BannerManagement from './pages/admin/BannerManagement.jsx';
+import CategoryPage from './pages/CategoryPage.jsx';
 import { AuthWrapper } from './components/context/auth.context.jsx';
 import './styles/global.css';
 import './index.css';
@@ -44,6 +45,10 @@ const router = createBrowserRouter([
       {
         path: "admin/banners",
         element: <BannerManagement />,
+      },
+      {
+        path: "category/:categoryId",
+        element: <CategoryPage />,
       },
     ],
   },

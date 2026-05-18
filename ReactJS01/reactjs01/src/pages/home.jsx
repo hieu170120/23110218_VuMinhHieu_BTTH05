@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from '../util/axios.customize';
 import ProductCard from '../components/ProductCard';
 import { AuthContext } from '../components/context/auth.context';
 import { Spin } from 'antd';
-import { RightOutlined, ShoppingOutlined } from '@ant-design/icons';
+import { RightOutlined, ShoppingOutlined, FireOutlined, EyeOutlined, LeftOutlined } from '@ant-design/icons';
 
 const SectionTitle = ({ title, sub, linkTo, linkLabel }) => (
     <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '40px' }}>
@@ -50,6 +50,106 @@ const ProductGrid = ({ products }) => (
     </div>
 );
 
+/* ── Horizontal Product Slider ─────────────────────────────────── */
+const ProductSlider = ({ products, icon: Icon, accentColor }) => {
+    const trackRef = useRef(null);
+    const CARD_W = 240; // px
+    const GAP    = 16;
+
+    const scroll = (dir) => {
+        if (!trackRef.current) return;
+        const step = (CARD_W + GAP) * 2;
+        trackRef.current.scrollBy({ left: dir === 'next' ? step : -step, behavior: 'smooth' });
+    };
+
+    if (!products || products.length === 0) return null;
+
+    return (
+        <div style={{ position: 'relative' }}>
+            {/* Prev button */}
+            <button
+                onClick={() => scroll('prev')}
+                className="slider-btn slider-btn-prev"
+                style={{
+                    position: 'absolute', left: '-20px', top: '50%', transform: 'translateY(-50%)',
+                    width: '44px', height: '44px', borderRadius: '50%',
+                    background: '#fff', border: '1.5px solid #e5e7eb',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', zIndex: 10, fontSize: '16px', color: '#374151',
+                    transition: 'all 0.2s',
+                }}
+            >
+                <LeftOutlined />
+            </button>
+
+            {/* Track */}
+            <div
+                ref={trackRef}
+                style={{
+                    display: 'flex',
+                    gap: `${GAP}px`,
+                    overflowX: 'auto',
+                    scrollSnapType: 'x mandatory',
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    paddingBottom: '8px',
+                }}
+                className="slider-track"
+            >
+                {products.map((product, index) => (
+                    <div
+                        key={product._id}
+                        style={{
+                            width: `${CARD_W}px`,
+                            flexShrink: 0,
+                            scrollSnapAlign: 'start',
+                            position: 'relative',
+                            paddingTop: '8px',
+                        }}
+                    >
+                        <ProductCard product={product} />
+                        {/* Rank badge — bottom-left corner */}
+                        <div style={{
+                            position: 'absolute',
+                            bottom: '60px', left: '12px',
+                            zIndex: 5,
+                            minWidth: '36px', height: '24px',
+                            borderRadius: '8px',
+                            background: index < 3 ? accentColor : '#6b7280',
+                            color: '#fff',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '11px', fontWeight: 800,
+                            padding: '0 8px',
+                            boxShadow: index < 3 ? `0 2px 8px ${accentColor}80` : '0 2px 6px rgba(0,0,0,0.2)',
+                            letterSpacing: '0.5px',
+                        }}>
+                            #{index + 1}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Next button */}
+            <button
+                onClick={() => scroll('next')}
+                className="slider-btn slider-btn-next"
+                style={{
+                    position: 'absolute', right: '-20px', top: '50%', transform: 'translateY(-50%)',
+                    width: '44px', height: '44px', borderRadius: '50%',
+                    background: '#fff', border: '1.5px solid #e5e7eb',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', zIndex: 10, fontSize: '16px', color: '#374151',
+                    transition: 'all 0.2s',
+                }}
+            >
+                <RightOutlined />
+            </button>
+        </div>
+    );
+};
+
 const HomePage = () => {
     const { auth } = useContext(AuthContext);
     const [loading, setLoading] = useState(true);
@@ -64,16 +164,23 @@ const HomePage = () => {
         subBanners: [],
     });
 
+    const [topSelling, setTopSelling] = useState([]);
+    const [topViewed,  setTopViewed]  = useState([]);
+
     useEffect(() => {
         const fetchHomeData = async () => {
             try {
-                const [prodRes, bannerRes] = await Promise.all([
+                const [prodRes, bannerRes, topSellRes, topViewRes] = await Promise.all([
                     axios.get('/v1/api/products/home'),
-                    axios.get('/v1/api/banners/active')
+                    axios.get('/v1/api/banners/active'),
+                    axios.get('/v1/api/products/top-selling?limit=10'),
+                    axios.get('/v1/api/products/top-viewed?limit=10'),
                 ]);
                 
                 if (prodRes && prodRes.latestProducts) setData(prodRes);
                 if (bannerRes && bannerRes.heroBanners) setBanners(bannerRes);
+                if (topSellRes && topSellRes.products) setTopSelling(topSellRes.products);
+                if (topViewRes && topViewRes.products)  setTopViewed(topViewRes.products);
             } catch (error) {
                 console.error('Failed to fetch home data:', error);
             } finally {
@@ -358,7 +465,7 @@ const HomePage = () => {
                         background: 'linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%)',
                         borderRadius: '36px',
                         padding: '64px 48px',
-                        marginBottom: '48px',
+                        marginBottom: '96px',
                     }}>
                         <SectionTitle
                             title="Được yêu thích nhất ❤️"
@@ -367,6 +474,55 @@ const HomePage = () => {
                             linkLabel="Xem tất cả"
                         />
                         <ProductGrid products={data.bestSellingProducts} />
+                    </section>
+                )}
+
+                {/* 🔥 Top 10 Bán Chạy */}
+                {topSelling.length > 0 && (
+                    <section style={{ marginBottom: '96px' }}>
+                        <SectionTitle
+                            title={<span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{
+                                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                    width: '40px', height: '40px', borderRadius: '12px',
+                                    background: 'linear-gradient(135deg, #ef4444, #f97316)',
+                                    color: '#fff', fontSize: '18px',
+                                }}><FireOutlined /></span>
+                                Top 10 Bán Chạy Nhất
+                            </span>}
+                            sub="Những sản phẩm được khách hàng tin yêu đặt mua nhiều nhất tại TechStore"
+                        />
+                        <ProductSlider
+                            products={topSelling}
+                            accentColor="#ef4444"
+                        />
+                    </section>
+                )}
+
+                {/* 👁 Top 10 Xem Nhiều Nhất */}
+                {topViewed.length > 0 && (
+                    <section style={{
+                        background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                        borderRadius: '36px',
+                        padding: '64px 48px',
+                        marginBottom: '96px',
+                    }}>
+                        <SectionTitle
+                            title={<span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{
+                                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                    width: '40px', height: '40px', borderRadius: '12px',
+                                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                                    color: '#fff', fontSize: '18px',
+                                }}><EyeOutlined /></span>
+                                Top 10 Xem Nhiều Nhất
+                            </span>}
+                            sub="Những sản phẩm được quan tâm và khám phá nhiều nhất trong tuần qua"
+                        />
+                        <ProductSlider
+                            products={topViewed}
+                            accentColor="#10b981"
+                        />
                     </section>
                 )}
             </div>
@@ -413,6 +569,13 @@ const HomePage = () => {
                     border-color: #2563eb;
                     box-shadow: 0 4px 24px rgba(37,99,235,0.1);
                     transform: translateY(-2px);
+                }
+                .slider-track::-webkit-scrollbar { display: none; }
+                .slider-btn:hover {
+                    background: #2563eb !important;
+                    color: #fff !important;
+                    border-color: #2563eb !important;
+                    transform: translateY(-50%) scale(1.1);
                 }
                 @keyframes scrollLine {
                     0%   { opacity: 0; transform: scaleY(0); transform-origin: top; }

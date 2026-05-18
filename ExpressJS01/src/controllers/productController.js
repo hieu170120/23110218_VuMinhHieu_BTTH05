@@ -21,13 +21,14 @@ const seedData = async (req, res) => {
                 name: 'iPhone 15 Pro Max',
                 description: 'Smartphone cao cấp nhất của Apple với thiết kế titan và camera 5x.',
                 price: 35000000,
-                promotionalPrice: 33000000, // Khuyến mãi
+                promotionalPrice: 33000000,
                 images: [
                     'https://cdn.hoanghamobile.com/i/productlist/dsp/Uploads/2023/09/13/iphone-15-pro-max-natural-titanium-pure-back-iphone-15-pro-max-natural-titanium-pure-front-2up-screen-usen.png',
                     'https://cdn.hoanghamobile.com/i/productlist/dsp/Uploads/2023/09/13/iphone-15-pro-max-black-titanium-pure-back-iphone-15-pro-max-black-titanium-pure-front-2up-screen-usen.png'
                 ],
                 stock: 50,
                 sold: 120,
+                views: 4850,
                 category: categories[0]._id
             },
             {
@@ -41,18 +42,20 @@ const seedData = async (req, res) => {
                 ],
                 stock: 30,
                 sold: 80,
+                views: 3200,
                 category: categories[0]._id
             },
             {
                 name: 'MacBook Pro 14 inch M3',
                 description: 'Laptop siêu mạnh mẽ dành cho dân chuyên nghiệp.',
                 price: 40000000,
-                promotionalPrice: 38500000, // Khuyến mãi
+                promotionalPrice: 38500000,
                 images: [
                     'https://cdn.hoanghamobile.com/i/productlist/dsp/Uploads/2023/10/31/macbook-pro-14-m3-space-gray-1.png'
                 ],
                 stock: 20,
                 sold: 45,
+                views: 2760,
                 category: categories[1]._id
             },
             {
@@ -65,6 +68,7 @@ const seedData = async (req, res) => {
                 ],
                 stock: 100,
                 sold: 300,
+                views: 5100,
                 category: categories[2]._id
             },
             {
@@ -77,6 +81,7 @@ const seedData = async (req, res) => {
                 ],
                 stock: 15,
                 sold: 25,
+                views: 1430,
                 category: categories[1]._id
             }
         ]);
@@ -122,7 +127,12 @@ const getHomepageProducts = async (req, res) => {
 const getProductDetails = async (req, res) => {
     try {
         const { id } = req.params;
-        const product = await Product.findById(id).populate('category', 'name');
+        // Tăng views mỗi lần xem chi tiết
+        const product = await Product.findByIdAndUpdate(
+            id,
+            { $inc: { views: 1 } },
+            { new: true }
+        ).populate('category', 'name');
         if (!product) {
             return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
         }
@@ -137,6 +147,72 @@ const getProductDetails = async (req, res) => {
             product,
             similarProducts
         });
+    } catch (error) {
+        return res.status(500).json({ message: "Lỗi server", error: error.message });
+    }
+};
+
+// Lấy sản phẩm theo danh mục có phân trang server-side
+const getProductsByCategory = async (req, res) => {
+    try {
+        const { categoryId } = req.params;
+        const page  = parseInt(req.query.page)  || 1;
+        const limit = parseInt(req.query.limit) || 12;
+        const skip  = (page - 1) * limit;
+
+        // Kiểm tra danh mục tồn tại
+        const category = await Category.findById(categoryId);
+        if (!category) {
+            return res.status(404).json({ message: "Không tìm thấy danh mục" });
+        }
+
+        const [products, totalProducts] = await Promise.all([
+            Product.find({ category: categoryId })
+                .populate('category', 'name')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit),
+            Product.countDocuments({ category: categoryId })
+        ]);
+
+        const totalPages = Math.ceil(totalProducts / limit);
+
+        return res.status(200).json({
+            products,
+            totalProducts,
+            totalPages,
+            currentPage: page,
+            limit,
+            category: { _id: category._id, name: category.name }
+        });
+    } catch (error) {
+        return res.status(500).json({ message: "Lỗi server", error: error.message });
+    }
+};
+
+// Lấy top 10 sản phẩm bán chạy nhất
+const getTopBestSelling = async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 10;
+        const products = await Product.find()
+            .sort({ sold: -1 })
+            .limit(limit)
+            .populate('category', 'name');
+        return res.status(200).json({ products, total: products.length });
+    } catch (error) {
+        return res.status(500).json({ message: "Lỗi server", error: error.message });
+    }
+};
+
+// Lấy top 10 sản phẩm xem nhiều nhất
+const getTopMostViewed = async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 10;
+        const products = await Product.find()
+            .sort({ views: -1 })
+            .limit(limit)
+            .populate('category', 'name');
+        return res.status(200).json({ products, total: products.length });
     } catch (error) {
         return res.status(500).json({ message: "Lỗi server", error: error.message });
     }
@@ -221,6 +297,9 @@ module.exports = {
     getProductDetails,
     searchAndFilterProducts,
     getCategories,
+    getProductsByCategory,
+    getTopBestSelling,
+    getTopMostViewed,
     createProduct,
     updateProduct,
     deleteProduct
