@@ -1,100 +1,7 @@
 const Product = require('../models/product');
 const Category = require('../models/category');
 
-// API Seed Data (Tạo dữ liệu mẫu)
-const seedData = async (req, res) => {
-    try {
-        // Xóa dữ liệu cũ
-        await Product.deleteMany({});
-        await Category.deleteMany({});
 
-        // Tạo Category mẫu
-        const categories = await Category.insertMany([
-            { name: 'Điện thoại', description: 'Các loại smartphone' },
-            { name: 'Laptop', description: 'Máy tính xách tay' },
-            { name: 'Phụ kiện', description: 'Tai nghe, ốp lưng, sạc' }
-        ]);
-
-        // Tạo Product mẫu
-        const products = await Product.insertMany([
-            {
-                name: 'iPhone 15 Pro Max',
-                description: 'Smartphone cao cấp nhất của Apple với thiết kế titan và camera 5x.',
-                price: 35000000,
-                promotionalPrice: 33000000,
-                images: [
-                    'https://cdn.hoanghamobile.com/i/productlist/dsp/Uploads/2023/09/13/iphone-15-pro-max-natural-titanium-pure-back-iphone-15-pro-max-natural-titanium-pure-front-2up-screen-usen.png',
-                    'https://cdn.hoanghamobile.com/i/productlist/dsp/Uploads/2023/09/13/iphone-15-pro-max-black-titanium-pure-back-iphone-15-pro-max-black-titanium-pure-front-2up-screen-usen.png'
-                ],
-                stock: 50,
-                sold: 120,
-                views: 4850,
-                category: categories[0]._id
-            },
-            {
-                name: 'Samsung Galaxy S24 Ultra',
-                description: 'Siêu phẩm Android với bút S-Pen và AI thông minh.',
-                price: 32000000,
-                promotionalPrice: null,
-                images: [
-                    'https://cdn.hoanghamobile.com/i/productlist/dsp/Uploads/2024/01/18/s24-ultra-grey.png',
-                    'https://cdn.hoanghamobile.com/i/productlist/dsp/Uploads/2024/01/18/s24-ultra-black.png'
-                ],
-                stock: 30,
-                sold: 80,
-                views: 3200,
-                category: categories[0]._id
-            },
-            {
-                name: 'MacBook Pro 14 inch M3',
-                description: 'Laptop siêu mạnh mẽ dành cho dân chuyên nghiệp.',
-                price: 40000000,
-                promotionalPrice: 38500000,
-                images: [
-                    'https://cdn.hoanghamobile.com/i/productlist/dsp/Uploads/2023/10/31/macbook-pro-14-m3-space-gray-1.png'
-                ],
-                stock: 20,
-                sold: 45,
-                views: 2760,
-                category: categories[1]._id
-            },
-            {
-                name: 'Tai nghe AirPods Pro 2',
-                description: 'Tai nghe chống ồn chủ động xuất sắc.',
-                price: 6000000,
-                promotionalPrice: 5500000,
-                images: [
-                    'https://cdn.hoanghamobile.com/i/productlist/dsp/Uploads/2022/09/08/image-removebg-preview-1.png'
-                ],
-                stock: 100,
-                sold: 300,
-                views: 5100,
-                category: categories[2]._id
-            },
-            {
-                name: 'Laptop Dell XPS 15',
-                description: 'Laptop Windows thiết kế đẹp, hiệu năng cao.',
-                price: 45000000,
-                promotionalPrice: null,
-                images: [
-                    'https://cdn.hoanghamobile.com/i/productlist/dsp/Uploads/2023/06/16/dell-xps-15-9530-1.png'
-                ],
-                stock: 15,
-                sold: 25,
-                views: 1430,
-                category: categories[1]._id
-            }
-        ]);
-
-        return res.status(200).json({
-            message: "Seed data successfully!",
-            categories,
-            products
-        });
-    } catch (error) {
-        return res.status(500).json({ message: "Lỗi seed data", error: error.message });
-    }
-};
 
 // Lấy dữ liệu cho Trang Chủ
 const getHomepageProducts = async (req, res) => {
@@ -292,7 +199,6 @@ const deleteProduct = async (req, res) => {
 };
 
 module.exports = {
-    seedData,
     getHomepageProducts,
     getProductDetails,
     searchAndFilterProducts,

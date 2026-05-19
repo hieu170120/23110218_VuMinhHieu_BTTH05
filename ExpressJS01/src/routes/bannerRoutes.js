@@ -4,8 +4,7 @@ const {
     getActiveBanners,
     createBanner,
     updateBanner,
-    deleteBanner,
-    seedBanners
+    deleteBanner
 } = require('../controllers/bannerController');
 
 const auth = require('../middleware/auth');
@@ -14,7 +13,6 @@ const isAdmin = require('../middleware/isAdmin');
 const router = express.Router();
 
 // Routes Public
-router.get('/seed', seedBanners); // Chạy 1 lần để tạo dữ liệu mẫu
 router.get('/active', getActiveBanners);
 
 // Routes Protected (Admin)

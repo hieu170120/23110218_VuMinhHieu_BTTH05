@@ -59,49 +59,12 @@ const deleteBanner = async (req, res) => {
     }
 };
 
-// Seed dữ liệu mẫu (Chạy 1 lần)
-const seedBanners = async (req, res) => {
-    try {
-        await Banner.deleteMany({}); // Xóa cũ
 
-        const banners = await Banner.insertMany([
-            {
-                title: "iPhone 15 Pro",
-                description: "Titan. Thật bền. Thật nhẹ. Thật Pro.",
-                imageUrl: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=2000&auto=format&fit=crop",
-                linkTo: "/search?category=iphone",
-                type: "hero",
-                isActive: true
-            },
-            {
-                title: "MacBook Air M3",
-                description: "Siêu mỏng. Siêu mạnh. Siêu M3.",
-                imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=800&auto=format&fit=crop",
-                linkTo: "/search?category=mac",
-                type: "sub",
-                isActive: true
-            },
-            {
-                title: "Apple Watch Ultra 2",
-                description: "Cuộc phiêu lưu cấp độ mới.",
-                imageUrl: "https://images.unsplash.com/photo-1434494878577-86c23bcb06b9?q=80&w=800&auto=format&fit=crop",
-                linkTo: "/search?category=watch",
-                type: "sub",
-                isActive: true
-            }
-        ]);
-
-        return res.status(200).json({ message: "Seed banners thành công", banners });
-    } catch (error) {
-        return res.status(500).json({ message: "Lỗi seed data", error: error.message });
-    }
-};
 
 module.exports = {
     getAllBanners,
     getActiveBanners,
     createBanner,
     updateBanner,
-    deleteBanner,
-    seedBanners
+    deleteBanner
 };
